@@ -2,7 +2,7 @@ CONFIG_HYPERWISOR_ENABLE_OTA=n
 CONFIG_HYPERWISOR_ENABLE_GPIO=n
 
 ## Point the device at your SECURED relay (change to your host):
-CONFIG_HYPERWISOR_WS_HOST="your-secure-relay.onrender.com"
+CONFIG_HYPERWISOR_WS_HOST="hyperwisor-realtime-secure.onrender.com"
 CONFIG_HYPERWISOR_WS_PORT=443
 
 ## Standard ESP-IDF flash + WiFi tweaks
