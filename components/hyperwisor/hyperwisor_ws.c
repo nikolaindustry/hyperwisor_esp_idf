@@ -38,6 +38,7 @@ static int64_t       s_reconnect_after_us = 0;
 /* HSC v1 handshake state */
 static bool s_hsc_enabled = false;
 static bool s_authenticated = false;
+static bool s_warned_pre_auth_send = false;
 static hyperwisor_ws_signer_cb_t s_signer = NULL;
 static char s_device_id[64] = {0};
 
@@ -136,6 +137,7 @@ static void hsc_handle_data(const char *data, int len)
         }
     } else if (strcmp(t, "auth_ok") == 0) {
         s_authenticated = true;
+        s_warned_pre_auth_send = false;
         ESP_LOGI(TAG, "HSC: authenticated");
         if (s_conn_cb) s_conn_cb(true);
     } else if (strcmp(t, "auth_fail") == 0) {
@@ -350,6 +352,27 @@ esp_err_t hyperwisor_ws_send(const char *data, int len)
 {
     if (!s_ws_client || !s_ws_connected) {
         return ESP_ERR_INVALID_STATE;
+    }
+
+    /* An open socket is not a usable one.
+     *
+     * This used to check only s_ws_connected, which goes true when TCP/TLS is
+     * up -- seconds before the HSC challenge is answered. Anything sent in that
+     * window is discarded by the server as a pre-auth frame, while this
+     * function returned ESP_OK. A panel whose button was pressed during startup
+     * therefore reported success and did nothing, which reads as a flaky
+     * platform rather than a race (observed 2026-10-30 on the bound_tile
+     * example: emit() returned ESP_OK 17 seconds before auth_ok).
+     *
+     * The Arduino library has always held frames back here. This brings the
+     * ESP-IDF client into line, and returns a distinct error so a caller can
+     * tell "not ready yet" from "send failed". */
+    if (s_hsc_enabled && !s_authenticated) {
+        if (!s_warned_pre_auth_send) {
+            s_warned_pre_auth_send = true;   /* once per connection, not per frame */
+            ESP_LOGW(TAG, "send held: HSC handshake not finished (frame dropped)");
+        }
+        return ESP_ERR_NOT_FINISHED;
     }
     int l = (len > 0) ? len : strlen(data);
     int ret = esp_websocket_client_send_text(s_ws_client, data, l, pdMS_TO_TICKS(5000));
