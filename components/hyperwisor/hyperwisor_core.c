@@ -130,6 +130,19 @@ esp_err_t hyperwisor_init(void)
     hyperwisor_register_cmd_handler("SYSTEM", hyperwisor_cmd_handle_system);
 #endif
 
+    /* DEVICE_STATUS answers "are you there?" and belongs to the library, not
+     * to the application.
+     *
+     * The handler existed and was documented as built-in, but nothing
+     * registered it -- so every device built on this component answered
+     * "Unknown command" to a liveness probe unless its author happened to know
+     * the handler was there and wired it up. Asking a device whether it is
+     * alive is not an application concern; a device that cannot answer that is
+     * simply broken, and the foundation should not let you build one.
+     *
+     * Not behind a Kconfig gate for the same reason. */
+    hyperwisor_register_cmd_handler("DEVICE_STATUS", hyperwisor_cmd_handle_device_status);
+
     ESP_LOGI(TAG, "Hyperwisor core initialized");
     return ESP_OK;
 }
