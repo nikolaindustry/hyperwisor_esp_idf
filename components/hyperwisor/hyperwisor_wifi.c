@@ -110,6 +110,26 @@ esp_err_t hyperwisor_wifi_connect(const char *ssid, const char *pass)
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
+    /* Power save is an explicit choice, never an inherited default.
+     *
+     * IDF defaults to WIFI_PS_MIN_MODEM: the radio wakes only for DTIM
+     * beacons. That is right on a battery and wrong on anything mains-powered
+     * -- on a busy 2.4 GHz band the station misses beacons, gives up on the AP
+     * and disassociates (wifi:bcn_timeout -> run -> init), so the connection
+     * drops every couple of minutes in a way that looks like a server fault.
+     * A wall panel lost a day to exactly that in October 2026.
+     *
+     * Hence Kconfig rather than a hardcoded call: a sensor node on a coin cell
+     * wants the opposite of what a panel wants, and neither should get it by
+     * accident. See HYPERWISOR_WIFI_POWER_SAVE. */
+#if CONFIG_HYPERWISOR_WIFI_PS_MIN_MODEM
+    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_MIN_MODEM));
+#elif CONFIG_HYPERWISOR_WIFI_PS_MAX_MODEM
+    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_MAX_MODEM));
+#else
+    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
+#endif
+
     /* Save credentials */
     hyperwisor_nvs_set_str("ssid", ssid);
     hyperwisor_nvs_set_str("pass", pass);
@@ -255,7 +275,7 @@ static esp_err_t prov_handler(httpd_req_t *req)
         /* HSC Phase 2: hand the device's public key back to the app in the
          * provisioning ack (deep link) so the app can register it. Proximity to
          * the device AP is the ownership proof. Only when security is enabled. */
-        char suffix[220] = {0};
+        char suffix[300] = {0};
         char pub[128];
         if (hyperwisor_hsc_ready() &&
             hyperwisor_hsc_get_public_key_b64(pub, sizeof(pub)) == ESP_OK) {

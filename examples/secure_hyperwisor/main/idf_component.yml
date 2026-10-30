@@ -1,7 +1,13 @@
-## Pull in the local Hyperwisor component during development.
-## When published, replace with: nikolaindustry/hyperwisor: "^0.1.0"
+## Pull in the local component during development.
+## When published, replace with: nikolaindustry/hyperwisor: "^0.4.0"
+##
+## The path must end in a directory named exactly "hyperwisor": ESP-IDF names a
+## path dependency after its DIRECTORY, not after the key here. The component
+## used to sit at the repo root, so a fresh clone (folder hyperwisor_esp_idf)
+## failed with "component hyperwisor could not be found" -- the first thing
+## anyone trying these examples would hit.
 
 dependencies:
   idf: ">=5.5,<7.0"
   hyperwisor:
-    path: ../../../
+    path: ../../../components/hyperwisor

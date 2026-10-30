@@ -21,15 +21,54 @@ config HYPERWISOR_HTTP_BASE_URL
 
 config HYPERWISOR_WS_HOST
     string "WebSocket server hostname"
-    default "nikolaindustry-realtime.onrender.com"
+    default "hyperwisor-realtime-secure.onrender.com"
     help
-      Hostname of the Hyperwisor realtime server. The library connects
+      Hostname of the relay this device connects to. The library connects
       to wss://<host>:<port>/?id=<deviceId>.
+
+      The default is the Hyperwisor secure relay, which authenticates every
+      connection (see HYPERWISOR_ENABLE_SECURITY). Point this at your own
+      server if you are not using Hyperwisor's.
+
+      This default was nikolaindustry-realtime.onrender.com until 0.4.0. That
+      host was retired on 2026-07-30 and has since been repurposed for an
+      unrelated project, so anything left on the old default was connecting
+      somewhere it had no business being.
 
 config HYPERWISOR_WS_PORT
     int "WebSocket server port"
     default 443
     range 1 65535
+
+choice HYPERWISOR_WIFI_POWER_SAVE
+    prompt "Wi-Fi power save mode"
+    default HYPERWISOR_WIFI_PS_NONE
+    help
+      How aggressively the station sleeps between beacons.
+
+      The IDF default is MIN_MODEM, which is right for a battery device and
+      wrong for anything mains-powered: the radio wakes only for DTIM beacons,
+      and on a busy 2.4 GHz band it misses them, gives up on the AP and
+      disassociates (wifi:bcn_timeout -> run -> init). The connection then
+      drops every couple of minutes for reasons that look like a server
+      problem. That cost a day of debugging on a wall panel in October 2026,
+      which is why this is an explicit choice rather than a default anyone
+      inherits silently.
+
+      Choose NONE for mains-powered devices: panels, controllers, gateways.
+      Choose MIN_MODEM or MAX_MODEM only when you are actually on a battery
+      and have measured that you need it.
+
+config HYPERWISOR_WIFI_PS_NONE
+    bool "None - radio always on (mains-powered)"
+
+config HYPERWISOR_WIFI_PS_MIN_MODEM
+    bool "Min modem - wake on DTIM (battery)"
+
+config HYPERWISOR_WIFI_PS_MAX_MODEM
+    bool "Max modem - longest sleep (battery, latency-tolerant)"
+
+endchoice
 
 # --------------- Feature gates ---------------
 
