@@ -23,10 +23,10 @@ config HYPERWISOR_WS_HOST
     string "WebSocket server hostname"
     default "hyperwisor-realtime-secure.onrender.com"
     help
-      Hostname of the relay this device connects to. The library connects
+      Hostname of the HSC this device connects to. The library connects
       to wss://<host>:<port>/?id=<deviceId>.
 
-      The default is the Hyperwisor secure relay, which authenticates every
+      The default is the HSC, which authenticates every
       connection (see HYPERWISOR_ENABLE_SECURITY). Point this at your own
       server if you are not using Hyperwisor's.
 

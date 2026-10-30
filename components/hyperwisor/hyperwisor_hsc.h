@@ -4,10 +4,10 @@
  *
  * On-chip P-256 identity. The private key is generated on the chip at first
  * boot and stored in NVS; it never leaves the device. The device answers the
- * relay's connection challenge by signing it, proving it is genuine without
+ * HSC's connection challenge by signing it, proving it is genuine without
  * transmitting any secret.
  *
- * Wire formats match the relay (utils/hsc.js) and the Arduino library
+ * Wire formats match the HSC (utils/hsc.js) and the Arduino library
  * byte-for-byte:
  *   - public key : raw uncompressed point 0x04||X||Y (65 bytes), base64
  *   - signature  : raw r||s (IEEE-P1363, 64 bytes), base64
@@ -36,7 +36,7 @@ bool hyperwisor_hsc_ready(void);
 esp_err_t hyperwisor_hsc_get_public_key_b64(char *out, size_t out_len);
 
 /**
- * Sign a relay challenge. Writes base64 of the raw 64-byte signature into `out`.
+ * Sign an HSC challenge. Writes base64 of the raw 64-byte signature into `out`.
  * role is "device"; channelId equals device_id for the device leg.
  */
 esp_err_t hyperwisor_hsc_sign(const char *device_id, const char *nonce,

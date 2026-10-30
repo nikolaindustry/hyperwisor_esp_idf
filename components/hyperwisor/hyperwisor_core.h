@@ -91,9 +91,9 @@ esp_err_t hyperwisor_get_user_id(char *out_buf, size_t buf_len);
 
 /* --- HSC v1 security (opt-in) ---
  * Enable the Hyperwisor Secure Channel: generates/loads the on-chip P-256 key
- * and makes the transport answer the relay's challenge on connect. Call AFTER
+ * and makes the transport answer the HSC's challenge on connect. Call AFTER
  * hyperwisor_init() and BEFORE hyperwisor_start(). Point the device at your
- * secured relay via CONFIG_HYPERWISOR_WS_HOST. Devices that don't call this
+ * HSC via CONFIG_HYPERWISOR_WS_HOST. Devices that don't call this
  * keep connecting as before (no handshake). */
 esp_err_t hyperwisor_enable_security(void);
 

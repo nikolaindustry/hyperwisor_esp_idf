@@ -342,7 +342,7 @@ esp_err_t hyperwisor_enable_security(void)
         return err;
     }
     hyperwisor_ws_enable_hsc(hsc_signer_bridge, s_state.device_id);
-    ESP_LOGI(TAG, "Security enabled — device will authenticate to the secured relay");
+    ESP_LOGI(TAG, "Security enabled — device will authenticate to the HSC");
     return ESP_OK;
 }
 

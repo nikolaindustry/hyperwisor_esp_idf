@@ -28,13 +28,13 @@ building the examples from a fresh clone.
   `ip_ready` rather than `wifi_connected`.
 - **The provisioning deep link was silently truncated.** `suffix[220]` could not
   hold a URL-encoded P-256 public key plus a device id; it is now 300.
-- **The relay's application-level keepalive went unanswered.** The device now
+- **The HSC's application-level keepalive went unanswered.** The device now
   replies, which is what refreshes a NAT mapping — the reply travels outbound,
   and nothing the server sends can do that.
 
 ### Changed
 
-- **`CONFIG_HYPERWISOR_WS_HOST` now defaults to the secure relay.** The previous
+- **`CONFIG_HYPERWISOR_WS_HOST` now defaults to the HSC.** The previous
   default was retired on 2026-07-30 and has since been repurposed for an
   unrelated project, so anything left on it was connecting somewhere it had no
   business being.
@@ -68,7 +68,7 @@ hijacked. Existing firmware is unaffected unless it calls `hyperwisor_enable_sec
 - WebSocket transport does the HSC challenge–response on connect and only reports
   connected after `auth_ok`.
 - `hyperwisor_enable_security()` + `hyperwisor_get_public_key_b64()` in core.
-- Point the device at your secured relay via `CONFIG_HYPERWISOR_WS_HOST`.
+- Point the device at your HSC via `CONFIG_HYPERWISOR_WS_HOST`.
 - `secure_hyperwisor` example.
 
 ## [0.1.0] — 2026-05-03

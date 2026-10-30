@@ -2,11 +2,11 @@
  * secure_hyperwisor — HSC v1 (Hyperwisor Secure Channel) example.
  *
  * The device generates a P-256 keypair ON-CHIP at first boot (the private key
- * never leaves the device) and proves its identity to the secured relay with a
+ * never leaves the device) and proves its identity to the HSC with a
  * signed challenge on every connect. No secret is ever transmitted.
  *
  * Setup:
- *   1. Point the library at your secured relay:
+ *   1. Point the library at your HSC:
  *        idf.py menuconfig  ->  Hyperwisor  ->  WebSocket server hostname
  *      (CONFIG_HYPERWISOR_WS_HOST), or set it in sdkconfig.defaults.
  *   2. Call hyperwisor_enable_security() AFTER init() and BEFORE start().

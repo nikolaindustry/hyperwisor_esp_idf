@@ -52,7 +52,7 @@ void hyperwisor_ws_enable_hsc(hyperwisor_ws_signer_cb_t signer, const char *devi
     ESP_LOGI(TAG, "HSC: handshake enabled");
 }
 
-/* The relay's application-level keepalive, answered in EVERY auth state.
+/* The HSC's application-level keepalive, answered in EVERY auth state.
  *
  * Returns true when the frame was a keepalive and has been consumed, so the
  * caller does not pass it on to the application as device data.
@@ -61,9 +61,9 @@ void hyperwisor_ws_enable_hsc(hyperwisor_ws_signer_cb_t signer, const char *devi
  * the keepalive arrives for the whole life of an authenticated connection.
  *
  * Answering matters because of direction. A NAT mapping is refreshed by
- * traffic going OUT, not by the relay sending frames in -- which is why the
- * relay's own 20s keepalive changed nothing on its own (2026-10-30). The reply
- * is a real data frame, and the relay clears its miss counter on any inbound
+ * traffic going OUT, not by the HSC sending frames in -- which is why the
+ * HSC's own 20s keepalive changed nothing on its own (2026-10-30). The reply
+ * is a real data frame, and the HSC clears its miss counter on any inbound
  * message, so it is liveness that does not depend on ping/pong control frames
  * surviving the trip. */
 static bool hsc_try_keepalive(const char *data, int len)
@@ -83,14 +83,14 @@ static bool hsc_try_keepalive(const char *data, int len)
         cJSON_Delete(out);
         /* Kept at DEBUG rather than deleted. Two things were established with
          * this line and both are worth being able to re-check without
-         * rewriting it: the device DOES answer the relay's keepalive (err=0,
+         * rewriting it: the device DOES answer the HSC's keepalive (err=0,
          * every 20s), and the radio is healthy while connections die
-         * (-21..-31 dBm). It also stops anyone re-reading the relay's `idle`
+         * (-21..-31 dBm). It also stops anyone re-reading the HSC's `idle`
          * figure as "the device went quiet" -- that figure is time since the
          * connection broke, not evidence of missing frames.
          *
          * Still unexplained as of 2026-10-30: a TCP RST neither end sends,
-         * roughly every 90s. Raise this to INFO and watch alongside the relay
+         * roughly every 90s. Raise this to INFO and watch alongside the HSC
          * log when picking that up again. */
         wifi_ap_record_t ap;
         int rssi = (esp_wifi_sta_get_ap_info(&ap) == ESP_OK) ? ap.rssi : 0;
@@ -188,7 +188,7 @@ static void ws_event_handler(void *handler_args, esp_event_base_t base,
             /* Hand the teardown to the core task -- see s_teardown_pending.
              * Doing it here would destroy the client from its own task and
              * panic the board, which is exactly what used to happen every
-             * time the relay dropped the connection. */
+             * time the HSC dropped the connection. */
             s_reconnect_after_us = esp_timer_get_time() + (int64_t)delay_ms * 1000;
             s_teardown_pending   = true;
             s_reconnect_attempt++;
@@ -255,7 +255,7 @@ esp_err_t hyperwisor_ws_connect(const char *uri)
          * 8 KB is the minimum that completes the handshake cleanly. */
         .task_stack = 8192,
         /* WebSocket PING, on the websocket itself. Set explicitly rather than
-         * left to the library default, because this is the frame the relay
+         * left to the library default, because this is the frame the HSC
          * counts as proof of life and the one that refreshes the NAT mapping
          * on the way out. Quiet connections were being dropped without it. */
         .ping_interval_sec = HYPERWISOR_WS_PING_INTERVAL_MS / 1000,
