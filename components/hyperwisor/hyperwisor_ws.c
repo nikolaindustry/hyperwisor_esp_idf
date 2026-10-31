@@ -45,6 +45,21 @@ static int64_t       s_reconnect_after_us = 0;
 static bool s_hsc_enabled = false;
 static bool s_authenticated = false;
 static bool s_warned_pre_auth_send = false;
+
+/* Send without the pre-auth gate.
+ *
+ * The gate in hyperwisor_ws_send() exists to stop APPLICATION frames leaving
+ * before the handshake finishes. The handshake's own frames are the exception
+ * and have to be, because they are what ends that state: the auth reply is by
+ * definition sent while unauthenticated, so routing it through the gate drops
+ * the one frame that would open it -- the device signs the challenge, the
+ * frame never leaves, and the server closes on its auth timeout five seconds
+ * later. The keepalive reply is the same: the comment on it says it is
+ * answered in EVERY auth state, and the gate silently made that untrue.
+ *
+ * Both took the gated path, which is why a device could sit reconnecting
+ * forever while its log claimed it had sent auth. */
+static esp_err_t ws_send_raw_json(cJSON *json);
 static hyperwisor_ws_signer_cb_t s_signer = NULL;
 static char s_device_id[64] = {0};
 
@@ -86,7 +101,9 @@ static bool hsc_try_keepalive(const char *data, int len)
         cJSON_AddStringToObject(out, "type", "pong");
         const cJSON *jts = cJSON_GetObjectItem(root, "ts");
         if (cJSON_IsNumber(jts)) cJSON_AddNumberToObject(out, "ts", jts->valuedouble);
-        esp_err_t err = hyperwisor_ws_send_json(out);
+        /* Raw: this must be answered in EVERY auth state, which is the whole
+         * point of it, and the pre-auth gate would have swallowed it. */
+        esp_err_t err = ws_send_raw_json(out);
         cJSON_Delete(out);
         /* Kept at DEBUG rather than deleted. Two things were established with
          * this line and both are worth being able to re-check without
@@ -135,9 +152,16 @@ static void hsc_handle_data(const char *data, int len)
             cJSON_AddStringToObject(out, "type", "auth");
             cJSON_AddStringToObject(out, "deviceId", s_device_id);
             cJSON_AddStringToObject(out, "sig", sig);
-            hyperwisor_ws_send_json(out);
+            esp_err_t aerr = ws_send_raw_json(out);
             cJSON_Delete(out);
-            ESP_LOGI(TAG, "HSC: signed challenge -> sent auth");
+            if (aerr == ESP_OK) {
+                ESP_LOGI(TAG, "HSC: signed challenge -> sent auth");
+            } else {
+                /* Said "sent auth" unconditionally before, so a frame that
+                 * never left still read as success in the log. */
+                ESP_LOGE(TAG, "HSC: auth frame failed to send: %s",
+                         esp_err_to_name(aerr));
+            }
         } else {
             ESP_LOGE(TAG, "HSC: signing failed");
         }
@@ -430,6 +454,20 @@ esp_err_t hyperwisor_ws_send(const char *data, int len)
     }
     int l = (len > 0) ? len : strlen(data);
     int ret = esp_websocket_client_send_text(s_ws_client, data, l, pdMS_TO_TICKS(5000));
+    return (ret >= 0) ? ESP_OK : ESP_FAIL;
+}
+
+static esp_err_t ws_send_raw_json(cJSON *json)
+{
+    if (!s_ws_client || !s_ws_connected) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    char *str = cJSON_PrintUnformatted(json);
+    if (!str) {
+        return ESP_FAIL;
+    }
+    int ret = esp_websocket_client_send_text(s_ws_client, str, strlen(str), pdMS_TO_TICKS(5000));
+    free(str);
     return (ret >= 0) ? ESP_OK : ESP_FAIL;
 }
 
