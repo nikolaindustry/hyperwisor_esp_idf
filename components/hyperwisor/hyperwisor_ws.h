@@ -17,6 +17,13 @@ extern "C" {
 
 #define HYPERWISOR_WS_RECONNECT_MS     5000   /* Initial reconnect delay */
 #define HYPERWISOR_WS_RECONNECT_MAX_MS 60000  /* Max reconnect delay (cap) */
+
+/* Retry delay after the server REJECTED our identity, as opposed to the link
+ * failing. Deliberately short and constant: "unknown device" almost always
+ * means the owner is partway through onboarding and the credential row is
+ * seconds away, so an exponential backoff punishes the one case that is about
+ * to fix itself. An unreachable host still gets the backoff above. */
+#define HYPERWISOR_WS_AUTH_RETRY_MS    5000
 /* WebSocket PING cadence -- protocol control frames on the websocket itself.
  *
  * These used to be wired to the client's keep_alive_* fields, which are not
