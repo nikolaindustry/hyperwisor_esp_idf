@@ -32,6 +32,7 @@ static TaskHandle_t s_hyper_task = NULL;
 static hyperwisor_user_msg_cb_t s_user_msg_cb = NULL;
 static uint32_t s_ap_start_time = 0;
 static bool s_ap_started = false;
+static hyperwisor_prov_state_t s_last_prov_state = HYPERWISOR_PROV_IDLE;
 static SemaphoreHandle_t s_state_mutex = NULL;  /* Protects s_state */
 #if CONFIG_HYPERWISOR_ENABLE_OTA
 static bool s_ota_report_pending = false;       /* Send OTA success on WS connect */
@@ -408,7 +409,23 @@ void hyperwisor_task(void *pvParam)
                 CONFIG_HYPERWISOR_WS_HOST, CONFIG_HYPERWISOR_WS_PORT, s_state.device_id);
         }
 
-        /* AP mode timeout: reboot after 4 minutes if still in AP */
+        /* AP mode timeout: reboot after 4 minutes if still in AP.
+         *
+         * Hold the clock while a provisioning trial is in flight, and restart
+         * it after one finishes. The trial brings the station up alongside the
+         * AP and reports the verdict on the setup page, so rebooting through
+         * that would take the page away at the moment it has something to say
+         * -- and a person who has just been told their password was wrong
+         * needs time to type another one. */
+        if (s_ap_started) {
+            hyperwisor_prov_state_t pst = hyperwisor_wifi_prov_state();
+            if (pst == HYPERWISOR_PROV_TRYING) {
+                s_ap_start_time = s_state.uptime_seconds;
+            } else if (pst != s_last_prov_state) {
+                s_last_prov_state = pst;
+                s_ap_start_time = s_state.uptime_seconds;
+            }
+        }
         if (s_state.ap_mode_active && s_ap_started) {
             if (s_state.uptime_seconds - s_ap_start_time > 240) {
                 ESP_LOGW(TAG, "Stuck in AP mode too long. Rebooting...");
