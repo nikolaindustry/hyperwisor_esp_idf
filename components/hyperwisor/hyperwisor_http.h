@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 /* Configurable via Kconfig → HYPERWISOR_HTTP_BASE_URL.
- * Defaults to https://hyperwisor.nikolaindustry.workers.dev/functions/v1 */
+ * Defaults to https://platform.hyperwisor.com/functions/v1 */
 #define HYPERWISOR_HTTP_BASE_URL     CONFIG_HYPERWISOR_HTTP_BASE_URL
 #define HYPERWISOR_HTTP_TIMEOUT_MS   10000
 

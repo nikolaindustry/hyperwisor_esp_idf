@@ -210,7 +210,7 @@ broken.
 ```kconfig
 CONFIG_HYPERWISOR_WS_HOST="hyperwisor-realtime-secure.onrender.com"
 CONFIG_HYPERWISOR_WS_PORT=443
-CONFIG_HYPERWISOR_HTTP_BASE_URL="https://hyperwisor.nikolaindustry.workers.dev/functions/v1"
+CONFIG_HYPERWISOR_HTTP_BASE_URL="https://platform.hyperwisor.com/functions/v1"
 ```
 
 Those are the defaults and point at the live platform. Override only when
@@ -349,7 +349,7 @@ idf.py -p /dev/ttyUSB0 flash monitor
 
 ## Links
 
-* Dashboard — <https://hyperwisor.nikolaindustry.workers.dev>
+* Platform and dashboard — <https://platform.hyperwisor.com>
 * Issues — <https://github.com/nikolaindustry/hyperwisor_esp_idf/issues>
 * Changelog — [CHANGELOG.md](CHANGELOG.md)
 
