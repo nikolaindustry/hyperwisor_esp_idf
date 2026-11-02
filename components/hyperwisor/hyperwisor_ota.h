@@ -45,10 +45,10 @@ void hyperwisor_ota_get_version(char *out_buf, size_t buf_len);
  * @brief Download progress of a running OTA.
  * @return -1 when no update is running, otherwise 0..100.
  *
- * Safe to poll from the LVGL task; the value is a plain int written by
- * the OTA task in 10% steps. Use it to show an "updating" overlay --
- * the panel reboots at the end, so the user needs to know not to cut
- * power mid-download.
+ * Safe to poll from any task; the value is a plain int written by the
+ * OTA task in 10% steps. Use it however the device reports progress --
+ * a screen overlay, an LED, a log line. The device reboots at the end,
+ * so something should tell the user not to cut power mid-download.
  */
 int hyperwisor_ota_get_progress(void);
 

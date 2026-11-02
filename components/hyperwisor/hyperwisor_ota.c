@@ -35,7 +35,8 @@ static char s_ota_feedback_target[64] = {0};
 static int s_last_reported_percent = -1;
 
 /* Live download progress for the UI. -1 = no update running, 0..100
- * while one is. Written from the OTA task, read from the LVGL task --
+ * while one is. Written from the OTA task, read from whatever task
+ * shows it (a UI task, a log line, an LED) --
  * a single aligned int, so plain volatile is enough here and avoids
  * dragging a lock into the download loop. */
 static volatile int s_progress_percent = -1;
