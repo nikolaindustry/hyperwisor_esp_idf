@@ -1,3 +1,44 @@
+## 0.5.0 — 2026-11-02
+
+Connection reliability. The 0.4.0 reconnect logic had three holes that only
+show up with real hardware on a real network, and one that only shows up once
+there is a fleet.
+
+### Fixed
+
+- **A clean close was not treated as a disconnect.** `esp_websocket_client`
+  raises `WEBSOCKET_EVENT_CLOSED` for a graceful close and
+  `WEBSOCKET_EVENT_DISCONNECTED` only for a broken one. The HSC refuses an
+  unregistered device with a *clean* close, so a device whose key was not yet
+  registered sat silent forever — exactly the device that is seconds away from
+  being registered by the app. Both events now schedule a reconnect.
+- **A rejected device never tried again.** With the above, identity rejection
+  now retries on a flat 5s interval rather than escalating: "unknown device"
+  almost always means onboarding is in progress.
+- **The pre-auth gate blocked the frame that ends pre-auth.** Application
+  frames are held until `auth_ok`, and the handshake response was going through
+  the same gate as the application — so the device could never authenticate.
+  Control frames now bypass it via `ws_send_raw_json()`.
+- **`DEVICE_STATUS` is answered by the library.** Whether a device is alive is
+  not an application concern, and a device that cannot answer it is broken.
+
+### Changed
+
+- **Reconnects are spread across the fleet.** Each retry lands anywhere in a
+  window as wide as the wait itself (`target/2 + rand(target)`). A fixed
+  interval means every device in the field reconnects in lockstep after a
+  server restart, and the burst keeps the server down. The spread grows with
+  the delay, so it is widest where the crowd is biggest.
+- **Backoff resets only on `auth_ok`**, not on TCP connect. A device that
+  connects and is refused no longer resets its counter each round.
+
+### Documentation
+
+- README rewritten: the provisioning flow and the message flow as diagrams, the
+  full public API, and the connection-behaviour table.
+- Fixed the repository URLs in `idf_component.yml`, which named a repo that
+  does not exist (`hyperwisor-esp-idf`, hyphens, for `hyperwisor_esp_idf`).
+
 ## 0.4.0 — 2026-10-30
 
 Reconciles four months of fixes made in a vendored copy of this component
