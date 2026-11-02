@@ -13,7 +13,7 @@ config HYPERWISOR_CMD_MAX_HANDLERS
 
 config HYPERWISOR_HTTP_BASE_URL
     string "HTTP API base URL"
-    default "https://platform.hyperwisor.com/functions/v1"
+    default "https://hyperwisor.nikolaindustry.workers.dev/functions/v1"
     help
       Base URL for the Hyperwisor HTTP API (database, SMS, auth,
       onboarding). All API paths are appended to this URL.
